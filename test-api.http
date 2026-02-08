@@ -1,0 +1,42 @@
+### Test WhatsApp Message Sending
+
+### 1. Send a test template message to Tebogo (Quick Test)
+POST http://localhost:8082/api/whatsapp/send-test
+Content-Type: application/json
+
+###
+
+### 2. Send a custom text message
+POST http://localhost:8082/api/whatsapp/send-text
+Content-Type: application/json
+
+{
+  "to": "27662035457",
+  "message": "Hello from Infobip! This is a test message from your Spring Boot application."
+}
+
+###
+
+### 3. Send a custom template message
+POST http://localhost:8082/api/whatsapp/send-template
+Content-Type: application/json
+
+{
+  "to": "27662035457",
+  "templateName": "test_whatsapp_template_en",
+  "language": "en",
+  "placeholders": ["Tebogo"]
+}
+
+###
+
+### 4. Check Swagger UI
+# Open in browser: http://localhost:8082/swagger-ui/index.html
+
+###
+
+### 5. Check H2 Console
+# Open in browser: http://localhost:8082/h2-console
+# JDBC URL: jdbc:h2:mem:testdb
+# Username: sa
+# Password: password

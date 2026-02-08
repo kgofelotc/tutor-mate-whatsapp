@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: tutormate-whatsapp
+    runtime: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: INFOBIP_API_KEY
+        sync: false
+      - key: INFOBIP_BASE_URL
+        value: https://e5v55q.api.infobip.com
+      - key: INFOBIP_WHATSAPP_FROM
+        value: "447860088970"
+      - key: SERVER_PORT
+        value: "8082"
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:h2:mem:tutormate
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+    healthCheckPath: /actuator/health

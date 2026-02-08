@@ -1,0 +1,13 @@
+target/
+.mvn/
+.git/
+.gitignore
+*.md
+.h2.db
+.DS_Store
+*.iml
+.idea/
+.vscode/
+temp-settings.xml
+test-api.http
+test-whatsapp.ps1
