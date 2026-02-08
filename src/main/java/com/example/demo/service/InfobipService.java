@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.infobip.ApiClient;
 import com.infobip.ApiException;
 import com.infobip.ApiKey;
+import com.infobip.BaseUrl;
 import com.infobip.api.WhatsAppApi;
 import com.infobip.model.*;
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ public class InfobipService {
     @PostConstruct
     public void init() {
         ApiClient apiClient = ApiClient.forApiKey(ApiKey.from(apiKey))
-                .withBaseUrl(baseUrl)
+                .withBaseUrl(BaseUrl.from(baseUrl))
                 .build();
         this.whatsAppApi = new WhatsAppApi(apiClient);
         logger.info("Infobip WhatsApp API initialized with base URL: {}", baseUrl);
@@ -48,9 +49,9 @@ public class InfobipService {
                     .to(to)
                     .content(new WhatsAppTextContent().text(messageText));
             
-            WhatsAppBulkMessageInfo response = whatsAppApi.sendWhatsAppTextMessage(textMessage).execute();
+            WhatsAppSingleMessageInfo response = whatsAppApi.sendWhatsAppTextMessage(textMessage).execute();
             
-            logger.info("Message sent successfully to {}: {}", to, response.getMessages().get(0).getMessageId());
+            logger.info("Message sent successfully to {}: {}", to, response.getMessageId());
             
         } catch (ApiException e) {
             logger.error("Error sending WhatsApp message to {}: {}", to, e.getMessage(), e);
