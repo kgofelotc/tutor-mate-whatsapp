@@ -50,6 +50,7 @@ public class ConversationService {
 
     @Autowired
     private RatingRepository ratingRepository;
+
     @Transactional
     public void processMessage(String phoneNumber, String messageText) {
         logger.info("Processing message from {}: {}", phoneNumber, messageText);
@@ -129,7 +130,6 @@ public class ConversationService {
             case UPDATING_AVAILABILITY:
                 handleAvailabilityUpdate(session, messageText);
                 break;
-        }
         }
 
         sessionRepository.save(session);
@@ -431,7 +431,7 @@ public class ConversationService {
             showProfile(session, user);
         } else if (normalizedMessage.equals("help")) {
             sendHelpMessage(session);
-        } 
+        }
         // Student commands
         else if (user.getRole() == User.UserRole.STUDENT) {
             if (normalizedMessage.equals("book") || normalizedMessage.equals("1")) {
@@ -585,7 +585,7 @@ public class ConversationService {
 
     private void startBookingFlow(UserSession session, User student) {
         List<Subject> subjects = subjectRepository.findByActiveTrue();
-        
+
         if (subjects.isEmpty()) {
             twilioService.sendTextMessage(session.getPhoneNumber(),
                     "No subjects available at the moment. Please try again later.");
@@ -609,7 +609,7 @@ public class ConversationService {
         try {
             int selection = Integer.parseInt(messageText.trim());
             List<Subject> subjects = subjectRepository.findByActiveTrue();
-            
+
             if (selection < 1 || selection > subjects.size()) {
                 twilioService.sendTextMessage(session.getPhoneNumber(),
                         "Invalid selection. Please enter a number from the list.");
@@ -618,14 +618,15 @@ public class ConversationService {
 
             Subject selectedSubject = subjects.get(selection - 1);
             session.setTempSubjectId(selectedSubject.getId());
-            
+
             // Find tutors for this subject
-            List<TutorSubject> tutorSubjects = tutorSubjectRepository.findTutorsForSubjectOrderedByRate(selectedSubject);
-            
+            List<TutorSubject> tutorSubjects = tutorSubjectRepository
+                    .findTutorsForSubjectOrderedByRate(selectedSubject);
+
             if (tutorSubjects.isEmpty()) {
                 twilioService.sendTextMessage(session.getPhoneNumber(),
                         "No tutors available for " + selectedSubject.getName() + " at the moment.\n\n" +
-                        "Type BOOK to try another subject.");
+                                "Type BOOK to try another subject.");
                 session.setState(UserSession.ConversationState.AUTHENTICATED);
                 sessionRepository.save(session);
                 return;
@@ -638,9 +639,8 @@ public class ConversationService {
                         return new TwilioService.ListOption(
                                 ts.getTutor().getId().toString(),
                                 ts.getTutor().getFullName(),
-                                String.format("R%.0f/hr • %s • %s", ts.getHourlyRate(), rating, 
-                                            ts.getQualifications() != null ? ts.getQualifications() : "")
-                        );
+                                String.format("R%.0f/hr • %s • %s", ts.getHourlyRate(), rating,
+                                        ts.getQualifications() != null ? ts.getQualifications() : ""));
                     })
                     .collect(Collectors.toList());
 
@@ -662,7 +662,7 @@ public class ConversationService {
         try {
             Subject subject = subjectRepository.findById(session.getTempSubjectId()).orElseThrow();
             List<TutorSubject> tutorSubjects = tutorSubjectRepository.findTutorsForSubjectOrderedByRate(subject);
-            
+
             int selection = Integer.parseInt(messageText.trim());
             if (selection < 1 || selection > tutorSubjects.size()) {
                 twilioService.sendTextMessage(session.getPhoneNumber(),
@@ -713,10 +713,10 @@ public class ConversationService {
 
         twilioService.sendTextMessage(session.getPhoneNumber(),
                 "📅 *Choose Date & Time*\n\n" +
-                "Please enter your preferred date and time:\n\n" +
-                "*Format:* YYYY-MM-DD HH:MM\n" +
-                "*Example:* 2026-02-15 14:00\n\n" +
-                "_Make sure to check the tutor's availability_");
+                        "Please enter your preferred date and time:\n\n" +
+                        "*Format:* YYYY-MM-DD HH:MM\n" +
+                        "*Example:* 2026-02-15 14:00\n\n" +
+                        "_Make sure to check the tutor's availability_");
 
         session.setState(UserSession.ConversationState.SELECTING_DATETIME);
         sessionRepository.save(session);
@@ -761,7 +761,7 @@ public class ConversationService {
             User tutor = userRepository.findById(session.getTempTutorId()).orElseThrow();
             Subject subject = subjectRepository.findById(session.getTempSubjectId()).orElseThrow();
             TutorSubject tutorSubject = tutorSubjectRepository.findByTutorAndSubject(tutor, subject).orElseThrow();
-            
+
             // Calculate price
             BigDecimal hourlyRate = tutorSubject.getHourlyRate();
             BigDecimal price = hourlyRate.multiply(new BigDecimal(duration))
@@ -770,13 +770,13 @@ public class ConversationService {
             // Show confirmation
             String confirmMessage = String.format(
                     "📋 *Confirm Your Booking*\n\n" +
-                    "Tutor: %s\n" +
-                    "Subject: %s\n" +
-                    "Date/Time: %s\n" +
-                    "Duration: %d minutes\n" +
-                    "Type: %s\n" +
-                    "Price: R%.2f\n\n" +
-                    "Confirm this booking?",
+                            "Tutor: %s\n" +
+                            "Subject: %s\n" +
+                            "Date/Time: %s\n" +
+                            "Duration: %d minutes\n" +
+                            "Type: %s\n" +
+                            "Price: R%.2f\n\n" +
+                            "Confirm this booking?",
                     tutor.getFullName(),
                     subject.getName(),
                     session.getTempDateTime(),
@@ -785,7 +785,7 @@ public class ConversationService {
                     price);
 
             twilioService.sendConfirmationMessage(session.getPhoneNumber(), confirmMessage);
-            
+
             // Store duration in notes temporarily
             session.setTempNotes(String.valueOf(duration));
             session.setState(UserSession.ConversationState.CONFIRMING_BOOKING);
@@ -808,7 +808,7 @@ public class ConversationService {
                 User student = userRepository.findByPhoneNumber(session.getPhoneNumber()).orElseThrow();
                 User tutor = userRepository.findById(session.getTempTutorId()).orElseThrow();
                 Subject subject = subjectRepository.findById(session.getTempSubjectId()).orElseThrow();
-                
+
                 // Parse date time (simplified)
                 LocalDateTime sessionDateTime = LocalDateTime.parse(session.getTempDateTime().replace(" ", "T"));
                 int duration = Integer.parseInt(session.getTempNotes());
@@ -901,7 +901,7 @@ public class ConversationService {
             TutorSubject ts = tutorSubjects.get(i);
             Double avgRating = ratingRepository.calculateAverageRating(ts.getTutor());
             String rating = avgRating != null ? String.format("%.1f⭐", avgRating) : "New tutor";
-            
+
             message.append(String.format("%d. %s\n" +
                     "   💰 R%.0f/hr • %s\n" +
                     "   %s\n\n",
@@ -995,9 +995,9 @@ public class ConversationService {
 
             String message = String.format(
                     "⭐ *Rate Your Session*\n\n" +
-                    "Session with %s\n" +
-                    "Subject: %s\n\n" +
-                    "How many stars? (1-5)",
+                            "Session with %s\n" +
+                            "Subject: %s\n\n" +
+                            "How many stars? (1-5)",
                     tutoringSession.getTutor().getFullName(),
                     tutoringSession.getSubject().getName());
 
@@ -1025,11 +1025,16 @@ public class ConversationService {
             int stars;
 
             // Parse stars from various formats
-            if (normalized.matches(".*5.*|five")) stars = 5;
-            else if (normalized.matches(".*4.*|four")) stars = 4;
-            else if (normalized.matches(".*3.*|three")) stars = 3;
-            else if (normalized.matches(".*2.*|two")) stars = 2;
-            else if (normalized.matches(".*1.*|one")) stars = 1;
+            if (normalized.matches(".*5.*|five"))
+                stars = 5;
+            else if (normalized.matches(".*4.*|four"))
+                stars = 4;
+            else if (normalized.matches(".*3.*|three"))
+                stars = 3;
+            else if (normalized.matches(".*2.*|two"))
+                stars = 2;
+            else if (normalized.matches(".*1.*|one"))
+                stars = 1;
             else {
                 twilioService.sendTextMessage(session.getPhoneNumber(),
                         "Please enter a rating from 1 to 5 stars.");
@@ -1037,7 +1042,8 @@ public class ConversationService {
             }
 
             User student = userRepository.findByPhoneNumber(session.getPhoneNumber()).orElseThrow();
-            TutoringSession tutoringSession = tutoringSessionRepository.findById(session.getTempSessionId()).orElseThrow();
+            TutoringSession tutoringSession = tutoringSessionRepository.findById(session.getTempSessionId())
+                    .orElseThrow();
 
             // Create rating
             Rating rating = new Rating(tutoringSession, tutoringSession.getTutor(), student, stars);
@@ -1064,7 +1070,8 @@ public class ConversationService {
         if (!normalized.equals("skip")) {
             try {
                 User student = userRepository.findByPhoneNumber(session.getPhoneNumber()).orElseThrow();
-                TutoringSession tutoringSession = tutoringSessionRepository.findById(session.getTempSessionId()).orElseThrow();
+                TutoringSession tutoringSession = tutoringSessionRepository.findById(session.getTempSessionId())
+                        .orElseThrow();
                 Rating rating = ratingRepository.findBySession(tutoringSession).orElseThrow();
 
                 rating.setReview(messageText.trim());
@@ -1091,14 +1098,14 @@ public class ConversationService {
     private void sendStudentHelpMessage(UserSession session) {
         twilioService.sendTextMessage(session.getPhoneNumber(),
                 "📚 *Student Commands*\n\n" +
-                "• BOOK - Book a session\n" +
-                "• SESSIONS - View sessions\n" +
-                "• FIND [subject] - Find tutors\n" +
-                "• CANCEL [id] - Cancel session\n" +
-                "• RATE [id] - Rate session\n" +
-                "• PROFILE - View profile\n" +
-                "• MENU - Main menu\n" +
-                "• LOGOUT - Sign out");
+                        "• BOOK - Book a session\n" +
+                        "• SESSIONS - View sessions\n" +
+                        "• FIND [subject] - Find tutors\n" +
+                        "• CANCEL [id] - Cancel session\n" +
+                        "• RATE [id] - Rate session\n" +
+                        "• PROFILE - View profile\n" +
+                        "• MENU - Main menu\n" +
+                        "• LOGOUT - Sign out");
     }
 
     // ============ TUTOR WORKFLOW METHODS ============
@@ -1216,8 +1223,8 @@ public class ConversationService {
     private void updateAvailability(UserSession session, User tutor) {
         twilioService.sendTextMessage(session.getPhoneNumber(),
                 "⏰ *Update Availability*\n\n" +
-                "Feature coming soon!\n" +
-                "You'll be able to set your weekly schedule here.");
+                        "Feature coming soon!\n" +
+                        "You'll be able to set your weekly schedule here.");
     }
 
     private void showEarnings(UserSession session, User tutor) {
@@ -1226,9 +1233,9 @@ public class ConversationService {
 
         String message = String.format(
                 "💰 *Your Earnings*\n\n" +
-                "This Month: R%.2f\n" +
-                "Total Lifetime: R%.2f\n\n" +
-                "_Type MENU for more options_",
+                        "This Month: R%.2f\n" +
+                        "Total Lifetime: R%.2f\n\n" +
+                        "_Type MENU for more options_",
                 monthlyEarnings,
                 totalEarnings);
 
@@ -1256,15 +1263,15 @@ public class ConversationService {
     private void sendTutorHelpMessage(UserSession session) {
         twilioService.sendTextMessage(session.getPhoneNumber(),
                 "👨‍🏫 *Tutor Commands*\n\n" +
-                "• SESSIONS - View sessions\n" +
-                "• PENDING - Pending requests\n" +
-                "• ACCEPT [id] - Accept booking\n" +
-                "• DECLINE [id] - Decline booking\n" +
-                "• COMPLETE [id] - Mark complete\n" +
-                "• AVAILABILITY - Update schedule\n" +
-                "• EARNINGS - View earnings\n" +
-                "• PROFILE - View profile\n" +
-                "• MENU - Main menu\n" +
-                "• LOGOUT - Sign out");
+                        "• SESSIONS - View sessions\n" +
+                        "• PENDING - Pending requests\n" +
+                        "• ACCEPT [id] - Accept booking\n" +
+                        "• DECLINE [id] - Decline booking\n" +
+                        "• COMPLETE [id] - Mark complete\n" +
+                        "• AVAILABILITY - Update schedule\n" +
+                        "• EARNINGS - View earnings\n" +
+                        "• PROFILE - View profile\n" +
+                        "• MENU - Main menu\n" +
+                        "• LOGOUT - Sign out");
     }
 }
