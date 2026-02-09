@@ -30,6 +30,25 @@ public class UserSession {
     @Column
     private String tempPassword; // Temporary storage during registration
 
+    // Booking flow temporary data
+    @Column
+    private Long tempSubjectId;
+
+    @Column
+    private Long tempTutorId;
+
+    @Column
+    private Long tempSessionId;
+
+    @Column
+    private String tempSessionType; // ONLINE or IN_PERSON
+
+    @Column
+    private String tempDateTime;
+
+    @Column
+    private String tempNotes;
+
     @Column(nullable = false)
     private LocalDateTime lastInteractionAt;
 
@@ -44,7 +63,30 @@ public class UserSession {
         REGISTER_EMAIL, // Registration: waiting for email
         REGISTER_PASSWORD, // Registration: waiting for password
         LOGIN_PASSWORD, // Login: waiting for password
-        AUTHENTICATED // User is logged in
+        AUTHENTICATED, // User is logged in
+        
+        // Student booking flow
+        SELECTING_SUBJECT, // Selecting subject for tutoring
+        SELECTING_TUTOR, // Browsing and selecting tutor
+        SELECTING_DATETIME, // Choosing session date/time
+        SELECTING_DURATION, // Choosing session duration
+        SELECTING_TYPE, // Online or in-person
+        CONFIRMING_BOOKING, // Confirming booking details
+        
+        // Session management
+        VIEWING_SESSIONS, // Viewing session list
+        CANCELING_SESSION, // Canceling a session
+        RESCHEDULING_SESSION, // Rescheduling a session
+        
+        // Rating flow
+        RATING_SESSION, // Rating a completed session
+        WRITING_REVIEW, // Writing review text
+        
+        // Tutor flows
+        MANAGING_SESSIONS, // Managing tutor sessions
+        UPDATING_AVAILABILITY, // Updating availability
+        SETTING_SUBJECTS, // Setting subjects and rates
+        RESPONDING_TO_BOOKING // Accepting/declining booking
     }
 
     // Constructors
@@ -141,5 +183,60 @@ public class UserSession {
         this.tempFullName = null;
         this.tempEmail = null;
         this.tempPassword = null;
+        this.tempSubjectId = null;
+        this.tempTutorId = null;
+        this.tempSessionId = null;
+        this.tempSessionType = null;
+        this.tempDateTime = null;
+        this.tempNotes = null;
+    }
+
+    // Booking flow getters and setters
+    public Long getTempSubjectId() {
+        return tempSubjectId;
+    }
+
+    public void setTempSubjectId(Long tempSubjectId) {
+        this.tempSubjectId = tempSubjectId;
+    }
+
+    public Long getTempTutorId() {
+        return tempTutorId;
+    }
+
+    public void setTempTutorId(Long tempTutorId) {
+        this.tempTutorId = tempTutorId;
+    }
+
+    public Long getTempSessionId() {
+        return tempSessionId;
+    }
+
+    public void setTempSessionId(Long tempSessionId) {
+        this.tempSessionId = tempSessionId;
+    }
+
+    public String getTempSessionType() {
+        return tempSessionType;
+    }
+
+    public void setTempSessionType(String tempSessionType) {
+        this.tempSessionType = tempSessionType;
+    }
+
+    public String getTempDateTime() {
+        return tempDateTime;
+    }
+
+    public void setTempDateTime(String tempDateTime) {
+        this.tempDateTime = tempDateTime;
+    }
+
+    public String getTempNotes() {
+        return tempNotes;
+    }
+
+    public void setTempNotes(String tempNotes) {
+        this.tempNotes = tempNotes;
     }
 }
