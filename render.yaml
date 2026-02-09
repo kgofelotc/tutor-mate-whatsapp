@@ -6,12 +6,12 @@ services:
     branch: main
     dockerfilePath: ./Dockerfile
     envVars:
-      - key: INFOBIP_API_KEY
+      - key: TWILIO_ACCOUNT_SID
         sync: false
-      - key: INFOBIP_BASE_URL
-        value: https://e5v55q.api.infobip.com
-      - key: INFOBIP_WHATSAPP_FROM
-        value: "447860088970"
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        value: "+14155238886"
       - key: SERVER_PORT
         value: "8082"
       - key: SPRING_DATASOURCE_URL

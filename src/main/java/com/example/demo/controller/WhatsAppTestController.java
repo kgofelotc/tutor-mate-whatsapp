@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.service.InfobipService;
+import com.example.demo.service.TwilioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +12,7 @@ import java.util.Map;
 public class WhatsAppTestController {
     
     @Autowired
-    private InfobipService infobipService;
+    private TwilioService twilioService;
     
     @PostMapping("/send-text")
     public ResponseEntity<?> sendTextMessage(@RequestBody Map<String, String> request) {
@@ -24,7 +24,7 @@ public class WhatsAppTestController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Missing 'to' or 'message' field"));
             }
             
-            infobipService.sendTextMessage(to, message);
+            twilioService.sendTextMessage(to, message);
             
             return ResponseEntity.ok(Map.of(
                 "status", "success",

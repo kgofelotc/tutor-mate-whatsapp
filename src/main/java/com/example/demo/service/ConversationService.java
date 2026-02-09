@@ -28,11 +28,7 @@ public class ConversationService {
     private UserRepository userRepository;
 
     @Autowired
-    private InfobipService infobipService;
-
-    /**
-     * Main entry point for processing incoming messages
-     */
+    private TwilioService twilioService;
     @Transactional
     public void processMessage(String phoneNumber, String messageText) {
         logger.info("Processing message from {}: {}", phoneNumber, messageText);
@@ -96,7 +92,7 @@ public class ConversationService {
                 "1️⃣ TUTOR - Share your knowledge\n" +
                 "2️⃣ STUDENT - Find help";
 
-        infobipService.sendTextMessage(session.getPhoneNumber(), welcomeMessage);
+        twilioService.sendTextMessage(session.getPhoneNumber(), welcomeMessage);
         session.setState(UserSession.ConversationState.AWAITING_ROLE);
     }
 
@@ -109,7 +105,7 @@ public class ConversationService {
         } else if (normalizedMessage.matches("2|student")) {
             selectedRole = "STUDENT";
         } else {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Invalid selection. Please reply with:\n1 or TUTOR\n2 or STUDENT");
             return;
         }
@@ -129,7 +125,7 @@ public class ConversationService {
                         "3️⃣ STATUS - Check account status",
                 roleEmoji, role);
 
-        infobipService.sendTextMessage(session.getPhoneNumber(), actionMessage);
+        twilioService.sendTextMessage(session.getPhoneNumber(), actionMessage);
         session.setState(UserSession.ConversationState.AWAITING_ACTION);
     }
 
@@ -143,7 +139,7 @@ public class ConversationService {
         } else if (normalizedMessage.matches("3|status")) {
             checkStatus(session);
         } else {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Invalid selection. Please reply with:\n" +
                             "1 or REGISTER\n2 or LOGIN\n3 or STATUS");
         }
@@ -152,14 +148,14 @@ public class ConversationService {
     private void startRegistration(UserSession session) {
         // Check if user already exists
         if (userRepository.existsByPhoneNumber(session.getPhoneNumber())) {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     "⚠️ An account with this phone number already exists.\n\n" +
                             "Please use LOGIN option instead.");
             sendActionMenu(session, session.getSelectedRole());
             return;
         }
 
-        infobipService.sendTextMessage(session.getPhoneNumber(),
+        twilioService.sendTextMessage(session.getPhoneNumber(),
                 "📝 *Registration - Step 1 of 3*\n\n" +
                         "Please enter your full name:");
         session.setState(UserSession.ConversationState.REGISTER_NAME);
@@ -169,13 +165,13 @@ public class ConversationService {
         String fullName = messageText.trim();
 
         if (fullName.length() < 2) {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Name is too short. Please enter your full name:");
             return;
         }
 
         session.setTempFullName(fullName);
-        infobipService.sendTextMessage(session.getPhoneNumber(),
+        twilioService.sendTextMessage(session.getPhoneNumber(),
                 "📝 *Registration - Step 2 of 3*\n\n" +
                         "Please enter your email address:");
         session.setState(UserSession.ConversationState.REGISTER_EMAIL);
@@ -185,20 +181,20 @@ public class ConversationService {
         String email = messageText.trim().toLowerCase();
 
         if (!EMAIL_PATTERN.matcher(email).matches()) {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Invalid email format. Please enter a valid email address:");
             return;
         }
 
         if (userRepository.existsByEmail(email)) {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     "⚠️ This email is already registered.\n\n" +
                             "Please enter a different email address:");
             return;
         }
 
         session.setTempEmail(email);
-        infobipService.sendTextMessage(session.getPhoneNumber(),
+        twilioService.sendTextMessage(session.getPhoneNumber(),
                 "📝 *Registration - Step 3 of 3*\n\n" +
                         "Please create a password (minimum 6 characters):");
         session.setState(UserSession.ConversationState.REGISTER_PASSWORD);
@@ -208,7 +204,7 @@ public class ConversationService {
         String password = messageText.trim();
 
         if (password.length() < 6) {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Password is too short. Please enter at least 6 characters:");
             return;
         }
@@ -239,7 +235,7 @@ public class ConversationService {
                 session.getTempEmail(),
                 session.getSelectedRole());
 
-        infobipService.sendTextMessage(session.getPhoneNumber(), successMessage);
+        twilioService.sendTextMessage(session.getPhoneNumber(), successMessage);
 
         session.clearTempData();
         session.setState(UserSession.ConversationState.AUTHENTICATED);
@@ -249,7 +245,7 @@ public class ConversationService {
         Optional<User> userOpt = userRepository.findByPhoneNumber(session.getPhoneNumber());
 
         if (userOpt.isEmpty()) {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     "❌ No account found with this phone number.\n\n" +
                             "Please use REGISTER option to create an account.");
             sendActionMenu(session, session.getSelectedRole());
@@ -260,7 +256,7 @@ public class ConversationService {
 
         // Check if role matches
         if (!user.getRole().name().equals(session.getSelectedRole())) {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     String.format(
                             "⚠️ This phone number is registered as a %s, not a %s.\n\n" +
                                     "Please select the correct role from the main menu.",
@@ -271,7 +267,7 @@ public class ConversationService {
             return;
         }
 
-        infobipService.sendTextMessage(session.getPhoneNumber(),
+        twilioService.sendTextMessage(session.getPhoneNumber(),
                 String.format("🔐 Welcome back, %s!\n\nPlease enter your password:", user.getFullName()));
         session.setState(UserSession.ConversationState.LOGIN_PASSWORD);
     }
@@ -282,7 +278,7 @@ public class ConversationService {
         Optional<User> userOpt = userRepository.findByPhoneNumber(session.getPhoneNumber());
 
         if (userOpt.isEmpty()) {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Session expired. Please start over by typing MENU");
             session.setState(UserSession.ConversationState.INITIAL);
             return;
@@ -307,10 +303,10 @@ public class ConversationService {
                     user.getRole().name(),
                     user.getStatus().name());
 
-            infobipService.sendTextMessage(session.getPhoneNumber(), successMessage);
+            twilioService.sendTextMessage(session.getPhoneNumber(), successMessage);
             session.setState(UserSession.ConversationState.AUTHENTICATED);
         } else {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Incorrect password. Please try again:");
         }
     }
@@ -319,7 +315,7 @@ public class ConversationService {
         Optional<User> userOpt = userRepository.findByPhoneNumber(session.getPhoneNumber());
 
         if (userOpt.isEmpty()) {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     "❌ No account found with this phone number.\n\n" +
                             "Please use REGISTER option to create an account.");
             sendActionMenu(session, session.getSelectedRole());
@@ -346,7 +342,7 @@ public class ConversationService {
                 user.getCreatedAt().toLocalDate(),
                 user.getLastLoginAt() != null ? user.getLastLoginAt().toLocalDate().toString() : "Never");
 
-        infobipService.sendTextMessage(session.getPhoneNumber(), statusMessage);
+        twilioService.sendTextMessage(session.getPhoneNumber(), statusMessage);
         sendActionMenu(session, session.getSelectedRole());
     }
 
@@ -356,7 +352,7 @@ public class ConversationService {
         Optional<User> userOpt = userRepository.findByPhoneNumber(session.getPhoneNumber());
 
         if (userOpt.isEmpty()) {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Session expired. Please type MENU to start over.");
             session.setState(UserSession.ConversationState.INITIAL);
             return;
@@ -373,7 +369,7 @@ public class ConversationService {
         } else if (normalizedMessage.equals("help")) {
             sendHelpMessage(session);
         } else {
-            infobipService.sendTextMessage(session.getPhoneNumber(),
+            twilioService.sendTextMessage(session.getPhoneNumber(),
                     "Available commands:\n" +
                             "• MENU - Show main menu\n" +
                             "• PROFILE - View your profile\n" +
@@ -397,7 +393,7 @@ public class ConversationService {
                 user.getRole().name(),
                 user.getFullName());
 
-        infobipService.sendTextMessage(session.getPhoneNumber(), menuMessage);
+        twilioService.sendTextMessage(session.getPhoneNumber(), menuMessage);
     }
 
     private void showProfile(UserSession session, User user) {
@@ -417,11 +413,11 @@ public class ConversationService {
                 user.getStatus().name(),
                 user.getCreatedAt().toLocalDate());
 
-        infobipService.sendTextMessage(session.getPhoneNumber(), profileMessage);
+        twilioService.sendTextMessage(session.getPhoneNumber(), profileMessage);
     }
 
     private void handleLogout(UserSession session) {
-        infobipService.sendTextMessage(session.getPhoneNumber(),
+        twilioService.sendTextMessage(session.getPhoneNumber(),
                 "👋 You have been logged out successfully.\n\n" +
                         "Type HI or MENU to start again.");
         session.setState(UserSession.ConversationState.INITIAL);
@@ -441,6 +437,6 @@ public class ConversationService {
                 "• HELP - This message\n\n" +
                 "Need assistance? Contact support.";
 
-        infobipService.sendTextMessage(session.getPhoneNumber(), helpMessage);
+        twilioService.sendTextMessage(session.getPhoneNumber(), helpMessage);
     }
 }
