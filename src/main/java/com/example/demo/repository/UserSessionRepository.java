@@ -8,8 +8,8 @@ import java.util.Optional;
 
 @Repository
 public interface UserSessionRepository extends JpaRepository<UserSession, Long> {
-    
+
     Optional<UserSession> findByPhoneNumber(String phoneNumber);
-    
+
     void deleteByPhoneNumber(String phoneNumber);
 }
