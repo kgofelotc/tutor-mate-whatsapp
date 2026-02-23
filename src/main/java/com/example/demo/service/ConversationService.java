@@ -31,7 +31,7 @@ public class ConversationService {
     private UserRepository userRepository;
 
     @Autowired
-    private TwilioService twilioService;
+    private MetaWhatsAppService metaWhatsAppService;
 
     @Autowired
     private SubjectRepository subjectRepository;
@@ -154,7 +154,7 @@ public class ConversationService {
                 "1️⃣ TUTOR - Share your knowledge\n" +
                 "2️⃣ STUDENT - Find help";
 
-        twilioService.sendTextMessage(session.getPhoneNumber(), welcomeMessage);
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(), welcomeMessage);
         session.setState(UserSession.ConversationState.AWAITING_ROLE);
     }
 
@@ -167,7 +167,7 @@ public class ConversationService {
         } else if (normalizedMessage.matches("2|student")) {
             selectedRole = "STUDENT";
         } else {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Invalid selection. Please reply with:\n1 or TUTOR\n2 or STUDENT");
             return;
         }
@@ -187,7 +187,7 @@ public class ConversationService {
                         "3️⃣ STATUS - Check account status",
                 roleEmoji, role);
 
-        twilioService.sendTextMessage(session.getPhoneNumber(), actionMessage);
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(), actionMessage);
         session.setState(UserSession.ConversationState.AWAITING_ACTION);
     }
 
@@ -201,7 +201,7 @@ public class ConversationService {
         } else if (normalizedMessage.matches("3|status")) {
             checkStatus(session);
         } else {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Invalid selection. Please reply with:\n" +
                             "1 or REGISTER\n2 or LOGIN\n3 or STATUS");
         }
@@ -210,14 +210,14 @@ public class ConversationService {
     private void startRegistration(UserSession session) {
         // Check if user already exists
         if (userRepository.existsByPhoneNumber(session.getPhoneNumber())) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "⚠️ An account with this phone number already exists.\n\n" +
                             "Please use LOGIN option instead.");
             sendActionMenu(session, session.getSelectedRole());
             return;
         }
 
-        twilioService.sendTextMessage(session.getPhoneNumber(),
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                 "📝 *Registration - Step 1 of 3*\n\n" +
                         "Please enter your full name:");
         session.setState(UserSession.ConversationState.REGISTER_NAME);
@@ -227,13 +227,13 @@ public class ConversationService {
         String fullName = messageText.trim();
 
         if (fullName.length() < 2) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Name is too short. Please enter your full name:");
             return;
         }
 
         session.setTempFullName(fullName);
-        twilioService.sendTextMessage(session.getPhoneNumber(),
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                 "📝 *Registration - Step 2 of 3*\n\n" +
                         "Please enter your email address:");
         session.setState(UserSession.ConversationState.REGISTER_EMAIL);
@@ -243,20 +243,20 @@ public class ConversationService {
         String email = messageText.trim().toLowerCase();
 
         if (!EMAIL_PATTERN.matcher(email).matches()) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Invalid email format. Please enter a valid email address:");
             return;
         }
 
         if (userRepository.existsByEmail(email)) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "⚠️ This email is already registered.\n\n" +
                             "Please enter a different email address:");
             return;
         }
 
         session.setTempEmail(email);
-        twilioService.sendTextMessage(session.getPhoneNumber(),
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                 "📝 *Registration - Step 3 of 3*\n\n" +
                         "Please create a password (minimum 6 characters):");
         session.setState(UserSession.ConversationState.REGISTER_PASSWORD);
@@ -266,7 +266,7 @@ public class ConversationService {
         String password = messageText.trim();
 
         if (password.length() < 6) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Password is too short. Please enter at least 6 characters:");
             return;
         }
@@ -297,7 +297,7 @@ public class ConversationService {
                 session.getTempEmail(),
                 session.getSelectedRole());
 
-        twilioService.sendTextMessage(session.getPhoneNumber(), successMessage);
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(), successMessage);
 
         session.clearTempData();
         session.setState(UserSession.ConversationState.AUTHENTICATED);
@@ -307,7 +307,7 @@ public class ConversationService {
         Optional<User> userOpt = userRepository.findByPhoneNumber(session.getPhoneNumber());
 
         if (userOpt.isEmpty()) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "❌ No account found with this phone number.\n\n" +
                             "Please use REGISTER option to create an account.");
             sendActionMenu(session, session.getSelectedRole());
@@ -318,7 +318,7 @@ public class ConversationService {
 
         // Check if role matches
         if (!user.getRole().name().equals(session.getSelectedRole())) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     String.format(
                             "⚠️ This phone number is registered as a %s, not a %s.\n\n" +
                                     "Please select the correct role from the main menu.",
@@ -329,7 +329,7 @@ public class ConversationService {
             return;
         }
 
-        twilioService.sendTextMessage(session.getPhoneNumber(),
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                 String.format("🔐 Welcome back, %s!\n\nPlease enter your password:", user.getFullName()));
         session.setState(UserSession.ConversationState.LOGIN_PASSWORD);
     }
@@ -340,7 +340,7 @@ public class ConversationService {
         Optional<User> userOpt = userRepository.findByPhoneNumber(session.getPhoneNumber());
 
         if (userOpt.isEmpty()) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Session expired. Please start over by typing MENU");
             session.setState(UserSession.ConversationState.INITIAL);
             return;
@@ -365,10 +365,10 @@ public class ConversationService {
                     user.getRole().name(),
                     user.getStatus().name());
 
-            twilioService.sendTextMessage(session.getPhoneNumber(), successMessage);
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(), successMessage);
             session.setState(UserSession.ConversationState.AUTHENTICATED);
         } else {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Incorrect password. Please try again:");
         }
     }
@@ -377,7 +377,7 @@ public class ConversationService {
         Optional<User> userOpt = userRepository.findByPhoneNumber(session.getPhoneNumber());
 
         if (userOpt.isEmpty()) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "❌ No account found with this phone number.\n\n" +
                             "Please use REGISTER option to create an account.");
             sendActionMenu(session, session.getSelectedRole());
@@ -404,7 +404,7 @@ public class ConversationService {
                 user.getCreatedAt().toLocalDate(),
                 user.getLastLoginAt() != null ? user.getLastLoginAt().toLocalDate().toString() : "Never");
 
-        twilioService.sendTextMessage(session.getPhoneNumber(), statusMessage);
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(), statusMessage);
         sendActionMenu(session, session.getSelectedRole());
     }
 
@@ -414,7 +414,7 @@ public class ConversationService {
         Optional<User> userOpt = userRepository.findByPhoneNumber(session.getPhoneNumber());
 
         if (userOpt.isEmpty()) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "❌ Session expired. Please type MENU to start over.");
             session.setState(UserSession.ConversationState.INITIAL);
             return;
@@ -474,7 +474,7 @@ public class ConversationService {
                 sendTutorHelpMessage(session);
             }
         } else {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Type MENU to see available options");
         }
     }
@@ -495,10 +495,10 @@ public class ConversationService {
             buttons.add("📅 View My Sessions");
             buttons.add("👤 Profile");
 
-            twilioService.sendMessageWithButtons(session.getPhoneNumber(), menuMessage, buttons);
+            metaWhatsAppService.sendMessageWithButtons(session.getPhoneNumber(), menuMessage, buttons);
 
             // Send additional commands
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "\n*Quick Commands:*\n" +
                             "• BOOK - Start booking\n" +
                             "• SESSIONS - View sessions\n" +
@@ -520,10 +520,10 @@ public class ConversationService {
             buttons.add("🔔 Pending Requests");
             buttons.add("⏰ Update Availability");
 
-            twilioService.sendMessageWithButtons(session.getPhoneNumber(), menuMessage, buttons);
+            metaWhatsAppService.sendMessageWithButtons(session.getPhoneNumber(), menuMessage, buttons);
 
             // Send additional commands
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "\n*Quick Commands:*\n" +
                             "• SESSIONS - View sessions\n" +
                             "• PENDING - Pending bookings\n" +
@@ -554,11 +554,11 @@ public class ConversationService {
                 user.getStatus().name(),
                 user.getCreatedAt().toLocalDate());
 
-        twilioService.sendTextMessage(session.getPhoneNumber(), profileMessage);
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(), profileMessage);
     }
 
     private void handleLogout(UserSession session) {
-        twilioService.sendTextMessage(session.getPhoneNumber(),
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                 "👋 You have been logged out successfully.\n\n" +
                         "Type HI or MENU to start again.");
         session.setState(UserSession.ConversationState.INITIAL);
@@ -578,7 +578,7 @@ public class ConversationService {
                 "• HELP - This message\n\n" +
                 "Need assistance? Contact support.";
 
-        twilioService.sendTextMessage(session.getPhoneNumber(), helpMessage);
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(), helpMessage);
     }
 
     // ============ STUDENT WORKFLOW METHODS ============
@@ -587,16 +587,16 @@ public class ConversationService {
         List<Subject> subjects = subjectRepository.findByActiveTrue();
 
         if (subjects.isEmpty()) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "No subjects available at the moment. Please try again later.");
             return;
         }
 
-        List<TwilioService.ListOption> options = subjects.stream()
-                .map(s -> new TwilioService.ListOption(s.getId().toString(), s.getName(), s.getDescription()))
+        List<MetaWhatsAppService.ListOption> options = subjects.stream()
+                .map(s -> new MetaWhatsAppService.ListOption(s.getId().toString(), s.getName(), s.getDescription()))
                 .collect(Collectors.toList());
 
-        twilioService.sendListMessage(session.getPhoneNumber(),
+        metaWhatsAppService.sendListMessage(session.getPhoneNumber(),
                 "📚 Select a Subject",
                 "Choose the subject you need help with:",
                 options);
@@ -611,7 +611,7 @@ public class ConversationService {
             List<Subject> subjects = subjectRepository.findByActiveTrue();
 
             if (selection < 1 || selection > subjects.size()) {
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         "Invalid selection. Please enter a number from the list.");
                 return;
             }
@@ -624,7 +624,7 @@ public class ConversationService {
                     .findTutorsForSubjectOrderedByRate(selectedSubject);
 
             if (tutorSubjects.isEmpty()) {
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         "No tutors available for " + selectedSubject.getName() + " at the moment.\n\n" +
                                 "Type BOOK to try another subject.");
                 session.setState(UserSession.ConversationState.AUTHENTICATED);
@@ -632,11 +632,11 @@ public class ConversationService {
                 return;
             }
 
-            List<TwilioService.ListOption> options = tutorSubjects.stream()
+            List<MetaWhatsAppService.ListOption> options = tutorSubjects.stream()
                     .map(ts -> {
                         Double avgRating = ratingRepository.calculateAverageRating(ts.getTutor());
                         String rating = avgRating != null ? String.format("%.1f⭐", avgRating) : "New";
-                        return new TwilioService.ListOption(
+                        return new MetaWhatsAppService.ListOption(
                                 ts.getTutor().getId().toString(),
                                 ts.getTutor().getFullName(),
                                 String.format("R%.0f/hr • %s • %s", ts.getHourlyRate(), rating,
@@ -644,7 +644,7 @@ public class ConversationService {
                     })
                     .collect(Collectors.toList());
 
-            twilioService.sendListMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendListMessage(session.getPhoneNumber(),
                     "👨‍🏫 Select a Tutor",
                     "Choose your tutor for " + selectedSubject.getName() + ":",
                     options);
@@ -653,7 +653,7 @@ public class ConversationService {
             sessionRepository.save(session);
 
         } catch (NumberFormatException e) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Please enter a number from the list.");
         }
     }
@@ -665,7 +665,7 @@ public class ConversationService {
 
             int selection = Integer.parseInt(messageText.trim());
             if (selection < 1 || selection > tutorSubjects.size()) {
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         "Invalid selection. Please enter a number from the list.");
                 return;
             }
@@ -678,7 +678,7 @@ public class ConversationService {
             buttons.add("💻 Online Session");
             buttons.add("📍 In-Person Session");
 
-            twilioService.sendMessageWithButtons(session.getPhoneNumber(),
+            metaWhatsAppService.sendMessageWithButtons(session.getPhoneNumber(),
                     "How would you like to have your session?",
                     buttons);
 
@@ -686,10 +686,10 @@ public class ConversationService {
             sessionRepository.save(session);
 
         } catch (NumberFormatException e) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Please enter a number from the list.");
         } catch (Exception e) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "An error occurred. Please try again.");
             logger.error("Error in tutor selection", e);
         }
@@ -704,14 +704,14 @@ public class ConversationService {
         } else if (normalizedMessage.matches("2|in-person.*|in person.*")) {
             type = "IN_PERSON";
         } else {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Please select:\n1 - Online\n2 - In-Person");
             return;
         }
 
         session.setTempSessionType(type);
 
-        twilioService.sendTextMessage(session.getPhoneNumber(),
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                 "📅 *Choose Date & Time*\n\n" +
                         "Please enter your preferred date and time:\n\n" +
                         "*Format:* YYYY-MM-DD HH:MM\n" +
@@ -731,7 +731,7 @@ public class ConversationService {
         buttons.add("⏱️ 60 minutes");
         buttons.add("⏱️ 90 minutes");
 
-        twilioService.sendMessageWithButtons(session.getPhoneNumber(),
+        metaWhatsAppService.sendMessageWithButtons(session.getPhoneNumber(),
                 "How long would you like the session to be?",
                 buttons);
 
@@ -750,7 +750,7 @@ public class ConversationService {
         } else if (normalizedMessage.matches(".*90.*|3")) {
             duration = 90;
         } else {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Please select duration:\n1 - 30 min\n2 - 60 min\n3 - 90 min");
             return;
         }
@@ -784,7 +784,7 @@ public class ConversationService {
                     session.getTempSessionType(),
                     price);
 
-            twilioService.sendConfirmationMessage(session.getPhoneNumber(), confirmMessage);
+            metaWhatsAppService.sendConfirmationMessage(session.getPhoneNumber(), confirmMessage);
 
             // Store duration in notes temporarily
             session.setTempNotes(String.valueOf(duration));
@@ -792,7 +792,7 @@ public class ConversationService {
             sessionRepository.save(session);
 
         } catch (Exception e) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "An error occurred. Please start over by typing BOOK.");
             logger.error("Error in duration selection", e);
             session.setState(UserSession.ConversationState.AUTHENTICATED);
@@ -818,7 +818,7 @@ public class ConversationService {
                 TutoringSession tutoringSession = sessionService.createSessionBooking(
                         student, tutor, subject, sessionDateTime, duration, type, null);
 
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         String.format("✅ *Booking Request Sent!*\n\n" +
                                 "Your booking request has been sent to %s.\n" +
                                 "You'll receive a notification once they respond.\n\n" +
@@ -832,14 +832,14 @@ public class ConversationService {
                 sessionRepository.save(session);
 
             } catch (Exception e) {
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         "An error occurred while creating the booking. Please try again.");
                 logger.error("Error confirming booking", e);
                 session.setState(UserSession.ConversationState.AUTHENTICATED);
                 sessionRepository.save(session);
             }
         } else {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Booking cancelled. Type BOOK to start over.");
             session.clearTempData();
             session.setState(UserSession.ConversationState.AUTHENTICATED);
@@ -851,7 +851,7 @@ public class ConversationService {
         List<TutoringSession> sessions = sessionService.getUpcomingSessions(student);
 
         if (sessions.isEmpty()) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "📅 You have no upcoming sessions.\n\nType BOOK to schedule one!");
             return;
         }
@@ -873,14 +873,14 @@ public class ConversationService {
         }
 
         message.append("_Type CANCEL [id] to cancel a session_");
-        twilioService.sendTextMessage(session.getPhoneNumber(), message.toString());
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(), message.toString());
     }
 
     private void findTutorsForSubject(UserSession session, User student, String subjectName) {
         Optional<Subject> subjectOpt = subjectRepository.findByName(subjectName);
 
         if (subjectOpt.isEmpty()) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Subject not found. Type BOOK to see all available subjects.");
             return;
         }
@@ -889,7 +889,7 @@ public class ConversationService {
         List<TutorSubject> tutorSubjects = tutorSubjectRepository.findTutorsForSubjectOrderedByRate(subject);
 
         if (tutorSubjects.isEmpty()) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "No tutors available for " + subjectName + " at the moment.");
             return;
         }
@@ -913,7 +913,7 @@ public class ConversationService {
         }
 
         message.append("_Type BOOK to schedule a session_");
-        twilioService.sendTextMessage(session.getPhoneNumber(), message.toString());
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(), message.toString());
     }
 
     private void initiateCancelSession(UserSession session, User student, String sessionIdStr) {
@@ -922,13 +922,13 @@ public class ConversationService {
             TutoringSession tutoringSession = tutoringSessionRepository.findById(sessionId).orElse(null);
 
             if (tutoringSession == null || !tutoringSession.getStudent().getId().equals(student.getId())) {
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         "Session not found or you don't have permission to cancel it.");
                 return;
             }
 
             session.setTempSessionId(sessionId);
-            twilioService.sendConfirmationMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendConfirmationMessage(session.getPhoneNumber(),
                     String.format("Are you sure you want to cancel your session with %s on %s?",
                             tutoringSession.getTutor().getFullName(),
                             tutoringSession.getSessionDateTime().toLocalDate()));
@@ -937,7 +937,7 @@ public class ConversationService {
             sessionRepository.save(session);
 
         } catch (NumberFormatException e) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Invalid session ID. Please use: CANCEL [id]");
         }
     }
@@ -950,15 +950,15 @@ public class ConversationService {
                 User student = userRepository.findByPhoneNumber(session.getPhoneNumber()).orElseThrow();
                 sessionService.cancelSession(session.getTempSessionId(), student, "Cancelled by student");
 
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         "✅ Session cancelled successfully.");
 
             } catch (Exception e) {
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         "Error cancelling session: " + e.getMessage());
             }
         } else {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Cancellation aborted.");
         }
 
@@ -973,20 +973,20 @@ public class ConversationService {
             TutoringSession tutoringSession = tutoringSessionRepository.findById(sessionId).orElse(null);
 
             if (tutoringSession == null || !tutoringSession.getStudent().getId().equals(student.getId())) {
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         "Session not found or you don't have permission to rate it.");
                 return;
             }
 
             if (tutoringSession.getStatus() != TutoringSession.SessionStatus.COMPLETED) {
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         "You can only rate completed sessions.");
                 return;
             }
 
             // Check if already rated
             if (ratingRepository.findBySession(tutoringSession).isPresent()) {
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         "You have already rated this session.");
                 return;
             }
@@ -1006,15 +1006,15 @@ public class ConversationService {
             buttons.add("⭐⭐ 2 Stars");
             buttons.add("⭐⭐⭐ 3 Stars");
 
-            twilioService.sendMessageWithButtons(session.getPhoneNumber(), message, buttons);
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendMessageWithButtons(session.getPhoneNumber(), message, buttons);
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "4️⃣ ⭐⭐⭐⭐ 4 Stars\n5️⃣ ⭐⭐⭐⭐⭐ 5 Stars");
 
             session.setState(UserSession.ConversationState.RATING_SESSION);
             sessionRepository.save(session);
 
         } catch (NumberFormatException e) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Invalid session ID. Please use: RATE [id]");
         }
     }
@@ -1036,7 +1036,7 @@ public class ConversationService {
             else if (normalized.matches(".*1.*|one"))
                 stars = 1;
             else {
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         "Please enter a rating from 1 to 5 stars.");
                 return;
             }
@@ -1049,7 +1049,7 @@ public class ConversationService {
             Rating rating = new Rating(tutoringSession, tutoringSession.getTutor(), student, stars);
             ratingRepository.save(rating);
 
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     String.format("✅ Thank you for rating! You gave %d stars.\n\n" +
                             "Would you like to add a written review? (Reply with review text or type SKIP)",
                             stars));
@@ -1058,7 +1058,7 @@ public class ConversationService {
             sessionRepository.save(session);
 
         } catch (Exception e) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Error saving rating. Please try again.");
             logger.error("Error in rating session", e);
         }
@@ -1077,16 +1077,16 @@ public class ConversationService {
                 rating.setReview(messageText.trim());
                 ratingRepository.save(rating);
 
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         "✅ Thank you for your review! Your feedback helps other students.");
 
             } catch (Exception e) {
-                twilioService.sendTextMessage(session.getPhoneNumber(),
+                metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                         "Error saving review, but your rating was recorded.");
                 logger.error("Error saving review", e);
             }
         } else {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "✅ Rating recorded. Thank you!");
         }
 
@@ -1096,7 +1096,7 @@ public class ConversationService {
     }
 
     private void sendStudentHelpMessage(UserSession session) {
-        twilioService.sendTextMessage(session.getPhoneNumber(),
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                 "📚 *Student Commands*\n\n" +
                         "• BOOK - Book a session\n" +
                         "• SESSIONS - View sessions\n" +
@@ -1114,7 +1114,7 @@ public class ConversationService {
         List<TutoringSession> sessions = sessionService.getUpcomingSessions(tutor);
 
         if (sessions.isEmpty()) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "📅 You have no upcoming sessions.");
             return;
         }
@@ -1137,14 +1137,14 @@ public class ConversationService {
         }
 
         message.append("_Type COMPLETE [id] to mark session as done_");
-        twilioService.sendTextMessage(session.getPhoneNumber(), message.toString());
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(), message.toString());
     }
 
     private void showPendingBookings(UserSession session, User tutor) {
         List<TutoringSession> pendingSessions = sessionService.getPendingSessions(tutor);
 
         if (pendingSessions.isEmpty()) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "🔔 No pending booking requests.");
             return;
         }
@@ -1166,7 +1166,7 @@ public class ConversationService {
         }
 
         message.append("_Reply with:_\n• ACCEPT [id]\n• DECLINE [id]");
-        twilioService.sendTextMessage(session.getPhoneNumber(), message.toString());
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(), message.toString());
     }
 
     private void acceptBooking(UserSession session, User tutor, String sessionIdStr) {
@@ -1174,14 +1174,14 @@ public class ConversationService {
             Long sessionId = Long.parseLong(sessionIdStr);
             sessionService.acceptSession(sessionId, tutor);
 
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "✅ Booking accepted! The student has been notified and will receive a payment link.");
 
         } catch (NumberFormatException e) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Invalid ID. Use: ACCEPT [id]");
         } catch (Exception e) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Error accepting booking: " + e.getMessage());
         }
     }
@@ -1191,14 +1191,14 @@ public class ConversationService {
             Long sessionId = Long.parseLong(sessionIdStr);
             sessionService.declineSession(sessionId, tutor, "Not available at this time");
 
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Booking declined. The student has been notified.");
 
         } catch (NumberFormatException e) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Invalid ID. Use: DECLINE [id]");
         } catch (Exception e) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Error declining booking: " + e.getMessage());
         }
     }
@@ -1208,20 +1208,20 @@ public class ConversationService {
             Long sessionId = Long.parseLong(sessionIdStr);
             sessionService.completeSession(sessionId, tutor);
 
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "✅ Session marked as complete! The student will be asked to leave a review.");
 
         } catch (NumberFormatException e) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Invalid ID. Use: COMPLETE [id]");
         } catch (Exception e) {
-            twilioService.sendTextMessage(session.getPhoneNumber(),
+            metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                     "Error completing session: " + e.getMessage());
         }
     }
 
     private void updateAvailability(UserSession session, User tutor) {
-        twilioService.sendTextMessage(session.getPhoneNumber(),
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                 "⏰ *Update Availability*\n\n" +
                         "Feature coming soon!\n" +
                         "You'll be able to set your weekly schedule here.");
@@ -1239,7 +1239,7 @@ public class ConversationService {
                 monthlyEarnings,
                 totalEarnings);
 
-        twilioService.sendTextMessage(session.getPhoneNumber(), message);
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(), message);
     }
 
     private void handleBookingResponse(UserSession session, String messageText) {
@@ -1261,7 +1261,7 @@ public class ConversationService {
     }
 
     private void sendTutorHelpMessage(UserSession session) {
-        twilioService.sendTextMessage(session.getPhoneNumber(),
+        metaWhatsAppService.sendTextMessage(session.getPhoneNumber(),
                 "👨‍🏫 *Tutor Commands*\n\n" +
                         "• SESSIONS - View sessions\n" +
                         "• PENDING - Pending requests\n" +
@@ -1275,3 +1275,4 @@ public class ConversationService {
                         "• LOGOUT - Sign out");
     }
 }
+

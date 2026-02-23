@@ -6,16 +6,18 @@ services:
     branch: main
     dockerfilePath: ./Dockerfile
     envVars:
-      - key: TWILIO_ACCOUNT_SID
+      - key: META_WHATSAPP_ACCESS_TOKEN
         sync: false
-      - key: TWILIO_AUTH_TOKEN
-        sync: false
-      - key: TWILIO_WHATSAPP_FROM
-        value: "+14155238886"
+      - key: META_WHATSAPP_PHONE_NUMBER_ID
+        value: "959729383897901"
+      - key: META_WHATSAPP_BUSINESS_ACCOUNT_ID
+        value: "941501588391536"
+      - key: META_WEBHOOK_VERIFY_TOKEN
+        value: "tutormate_secure_verify_token_2026"
       - key: SERVER_PORT
         value: "8082"
       - key: SPRING_DATASOURCE_URL
         value: jdbc:h2:mem:tutormate
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
-    healthCheckPath: /actuator/health
+    healthCheckPath: /api/meta/test/health

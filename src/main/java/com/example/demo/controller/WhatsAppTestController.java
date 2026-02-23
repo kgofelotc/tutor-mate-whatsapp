@@ -1,6 +1,6 @@
 package com.example.demo.controller;
 
-import com.example.demo.service.TwilioService;
+import com.example.demo.service.MetaWhatsAppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,31 +10,29 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/whatsapp")
 public class WhatsAppTestController {
-    
+
     @Autowired
-    private TwilioService twilioService;
-    
+    private MetaWhatsAppService metaWhatsAppService;
+
     @PostMapping("/send-text")
     public ResponseEntity<?> sendTextMessage(@RequestBody Map<String, String> request) {
         try {
             String to = request.get("to");
             String message = request.get("message");
-            
+
             if (to == null || message == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Missing 'to' or 'message' field"));
             }
-            
-            twilioService.sendTextMessage(to, message);
-            
+
+            metaWhatsAppService.sendTextMessage(to, message);
+
             return ResponseEntity.ok(Map.of(
-                "status", "success",
-                "message", "Message sent to " + to
-            ));
+                    "status", "success",
+                    "message", "Message sent to " + to));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of(
-                "status", "error",
-                "message", e.getMessage()
-            ));
+                    "status", "error",
+                    "message", e.getMessage()));
         }
     }
 }
